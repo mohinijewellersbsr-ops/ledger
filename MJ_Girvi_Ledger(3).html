@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MJ Girvi">
+<title>MJ Girvi — Gold Mortgage Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#B87333;--gold-hover:#9e6228;--gold-pale:#FBF5EC;--gold-border:#E8C99A;
+  --bg:#FAFAF8;--bg2:#F4F3EF;--bg3:#EEECEA;
+  --text:#1A1A18;--text2:#6B6B66;--text3:#9E9E98;
+  --border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.13);
+  --green:#1D9E75;--blue:#378ADD;--purple:#7F77DD;--red:#D85A30;
+  --radius:10px;--radius-lg:14px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-text-size-adjust:100%}
+/* Prevent iOS zoom on input focus — must be 16px min */
+input,select,textarea{font-size:16px !important}
+@media(min-width:600px){input,select,textarea{font-size:13px !important}}
+
+/* TOPBAR */
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:8px}
+.brand-icon{width:30px;height:30px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{width:16px;height:16px;fill:#fff}
+.brand-name{font-family:'DM Serif Display',serif;font-size:17px;letter-spacing:-.3px;color:var(--text)}
+.brand-sub{font-size:10px;color:var(--text3);margin-top:-2px}
+.nav{display:flex;gap:2px}
+.nav button{background:none;border:none;padding:6px 10px;font-size:12px;color:var(--text2);cursor:pointer;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:400;transition:all .15s}
+.nav button:hover{background:var(--bg2);color:var(--text)}
+.nav button.active{background:var(--bg2);color:var(--text);font-weight:500}
+.sync-status{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);flex-shrink:0}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;transition:background .3s;flex-shrink:0}
+.sync-dot.synced{background:var(--green)}
+.sync-dot.syncing{background:var(--gold);animation:pulse 1s infinite}
+.sync-dot.error{background:#E24B4A}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@media(max-width:480px){.sync-status span{display:none}}
+
+/* LAYOUT */
+.content{padding:16px;max-width:1040px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:600px){.stats-grid{grid-template-columns:repeat(4,1fr);}}
+.stat{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.stat-val{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-.5px}
+.stat-val.gold{color:var(--gold)}
+
+/* BUTTONS */
+.btn{height:40px;padding:0 16px;border:1px solid var(--border2);border-radius:var(--radius);font-size:14px;cursor:pointer;background:#fff;color:var(--text);font-family:'DM Sans',sans-serif;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap;-webkit-appearance:none}
+.btn:active{opacity:.8}
+.btn-gold{background:var(--gold);color:#fff;border-color:var(--gold)}
+.btn-gold:active{background:var(--gold-hover)}
+.btn-sm{height:34px;padding:0 12px;font-size:13px}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-danger{color:#A32D2D;border-color:rgba(163,45,45,.3)}
+.btn-danger:active{background:#FCEBEB}
+
+/* TABLE — horizontal scroll on mobile */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.toolbar input{flex:1;height:42px;border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;font-size:16px;background:#fff;color:var(--text);font-family:'DM Sans',sans-serif}
+.toolbar input:focus{outline:none;border-color:var(--gold)}
+.table-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+th{padding:10px 12px;text-align:left;font-weight:500;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer}
+tbody tr:active td{background:var(--bg)}
+.badge{display:inline-block;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:500}
+.badge-active{background:var(--gold-pale);color:var(--gold-hover)}
+.badge-closed{background:var(--bg2);color:var(--text3)}
+.packet{display:inline-flex;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:12px;font-weight:600;letter-spacing:.5px;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.amt-due{font-weight:600;color:var(--gold)}
+
+/* MODAL — full screen on mobile */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;overflow:hidden}
+@media(min-width:600px){.overlay{align-items:flex-start;padding:24px 16px;overflow-y:auto}}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:var(--radius-lg) var(--radius-lg) 0 0;border:1px solid var(--border);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media(min-width:600px){.modal{border-radius:var(--radius-lg);margin:auto;max-height:88vh}}
+.modal-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:5;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.modal-head h2{font-size:15px;font-weight:600;letter-spacing:-.2px}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.modal-body{padding:18px}
+.modal-foot{padding:14px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#fff;position:sticky;bottom:0}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:13px;color:var(--text2);font-weight:500;margin-bottom:6px}
+.form-row input,.form-row select,.form-row textarea{width:100%;height:46px;border:1px solid var(--border);border-radius:var(--radius);padding:0 14px;font-size:16px;background:#fff;color:var(--text);font-family:'DM Sans',sans-serif;transition:border .15s;-webkit-appearance:none;appearance:none}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:var(--gold)}
+.form-row textarea{height:80px;padding:12px 14px;resize:none}
+/* Date input — custom styled to fix iOS picker */
+.form-row input[type=date]{-webkit-appearance:none;appearance:none;background:#fff;color:var(--text)}
+.form-row input[type=date]::-webkit-date-and-time-value{text-align:left}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-2 .form-row{margin:0}
+.form-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.form-3 .form-row{margin:0}
+@media(max-width:480px){.form-3{grid-template-columns:1fr 1fr}.form-3 .form-row:last-child{grid-column:1/-1}}
+.hint{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* DETAIL */
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;font-size:14px;color:var(--text2);cursor:pointer;padding:0;margin-bottom:14px;font-family:'DM Sans',sans-serif;font-weight:500}
+.detail-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.detail-name h2{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.detail-name p{font-size:13px;color:var(--text2);margin-top:4px}
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:14px}
+@media(min-width:600px){.info-grid{grid-template-columns:repeat(3,1fr)}}
+.info-cell{background:#fff;padding:12px 14px}
+.info-cell label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+.info-cell .val{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.info-cell .val.gold{color:var(--gold)}
+.sec-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 9px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.tl-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.tl-row{display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;align-items:flex-start}
+.tl-row:last-child{border-bottom:none}
+.tl-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.d-start{background:var(--gold)}.d-interest{background:var(--green)}.d-deposit{background:var(--blue)}.d-close{background:#aaa}.d-jadd{background:var(--purple)}.d-jrem{background:var(--red)}
+.tl-date{width:82px;color:var(--text3);flex-shrink:0;font-size:12px;padding-top:1px}
+.tl-desc{flex:1;color:var(--text);line-height:1.5;font-size:13px}
+.tl-amt{font-weight:600;text-align:right;min-width:72px;font-size:13px}
+.empty-state{padding:40px;text-align:center;color:var(--text3);font-size:13px}
+.jtag{display:inline-block;font-size:11px;background:var(--bg2);border-radius:4px;padding:2px 6px;margin:2px;color:var(--text2)}
+.wpill{display:inline-flex;align-items:center;gap:5px;background:var(--gold-pale);border-radius:6px;padding:3px 10px;font-size:12px;color:var(--gold-hover);font-weight:500;margin-top:6px}
+
+/* PHOTOS */
+.photo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px}
+.photo-thumb{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;border:1px solid var(--border);cursor:pointer;transition:opacity .15s}
+.photo-thumb:hover{opacity:.85}
+.photo-add{width:100%;aspect-ratio:1;border-radius:8px;border:1.5px dashed var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:22px;flex-direction:column;gap:3px;transition:all .15s}
+.photo-add:hover{background:var(--bg2);border-color:var(--gold)}
+.photo-add span{font-size:10px;font-weight:500}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:400;align-items:center;justify-content:center}
+.lightbox.open{display:flex}
+.lightbox img{max-width:92vw;max-height:88vh;border-radius:10px;object-fit:contain}
+.lightbox-close{position:absolute;top:18px;right:22px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;cursor:pointer;width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.lightbox-close:hover{background:rgba(255,255,255,.25)}
+
+/* NOTIFY */
+.notify-modal{width:480px}
+.ntfy-summary{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px}
+.ntfy-tag{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px}
+.ntfy-main{font-size:15px;font-weight:600;letter-spacing:-.2px;margin-bottom:2px}
+.ntfy-sub{font-size:12px;color:var(--text2)}
+.notify-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.ntfy-card{border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:10px}
+.ntfy-person{display:flex;align-items:center;gap:10px}
+.ntfy-avatar{width:38px;height:38px;border-radius:50%;background:var(--gold-pale);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:var(--gold-hover);flex-shrink:0}
+.ntfy-name{font-size:13px;font-weight:600}
+.ntfy-phone{font-size:11px;color:var(--text3)}
+.ntfy-preview{background:var(--bg);border-radius:7px;padding:9px 11px;font-size:11px;line-height:1.65;color:var(--text2);white-space:pre-wrap;max-height:88px;overflow-y:auto;border:1px solid var(--border)}
+.wa-btn{width:100%;height:36px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
+.wa-btn:hover{background:#1ead55}
+.wa-btn.sent{background:#EAF3DE;color:#3B6D11;cursor:default}
+.skip-row{text-align:center}
+.skip-row button{background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline}
+
+/* SETTINGS */
+.settings-block{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px}
+.settings-block h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.settings-block p{font-size:12px;color:var(--text2);margin-bottom:14px}
+.staff-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.staff-card-d{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.staff-card-d .av{width:38px;height:38px;border-radius:50%;background:var(--gold-pale);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--gold-hover);margin-bottom:10px}
+
+/* LOADING */
+.loader{display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.loader.show{display:flex}
+.loader-ring{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+.loader-text{font-size:13px;color:var(--text2)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:600;transition:transform .3s;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.error{background:#A32D2D}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div style="width:52px;height:52px;background:var(--gold);border-radius:14px;display:flex;align-items:center;justify-content:center">
+      <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:#fff"><path d="M11.5 2C6.81 2 3 5.81 3 10.5S6.81 19 11.5 19h.5v3c4.86-2.34 8-7 8-11.5C20 5.81 16.19 2 11.5 2zm1 14.5h-2v-2h2v2zm0-4h-2c0-3.25 3-3 3-5 0-1.1-.9-2-2-2s-2 .9-2 2h-2c0-2.21 1.79-4 4-4s4 1.79 4 4c0 2.5-3 2.75-3 5z"/></svg>
+    </div>
+    <div style="text-align:center">
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-.3px;color:var(--text)">MJ Girvi</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px" id="loader-text">Loading your data...</div>
+    </div>
+    <div class="loader-ring"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></div>
+    <div><div class="brand-name">MJ Girvi</div><div class="brand-sub">Gold Mortgage Ledger</div></div>
+  </div>
+  <nav class="nav">
+    <button class="active" onclick="showPage('dashboard')">Dashboard</button>
+    <button onclick="showPage('accounts')">Accounts</button>
+    <button onclick="showPage('settings')">Settings</button>
+  </nav>
+  <div class="sync-status"><div class="sync-dot synced" id="sync-dot"></div><span id="sync-label">Synced</span></div>
+</div>
+
+<div class="content">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="toolbar">
+    <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;flex:1">Active accounts</div>
+    <button class="btn btn-gold" onclick="openNewAccount()">+ New account</button>
+  </div>
+  <div class="table-card">
+    <table><thead><tr>
+      <th>Customer</th><th>Packet</th><th>Principal</th><th>Weight</th><th>Since</th><th>Interest due</th><th>By</th><th></th>
+    </tr></thead><tbody id="dash-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- ACCOUNTS -->
+<div class="page" id="page-accounts">
+  <div id="acct-list-view">
+    <div class="toolbar">
+      <input type="text" id="search-input" placeholder="Search by name, phone or packet code..." oninput="renderList()">
+      <button class="btn btn-gold" onclick="openNewAccount()">+ New account</button>
+    </div>
+    <div class="table-card">
+      <table><thead><tr>
+        <th>Customer</th><th>Packet</th><th>Phone</th><th>Principal</th><th>Weight</th><th>Start date</th><th>Status</th><th></th>
+      </tr></thead><tbody id="acct-tbody"></tbody></table>
+    </div>
+  </div>
+  <div id="acct-detail-view" style="display:none"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="settings-block">
+    <h3>Staff profiles &amp; notification numbers</h3>
+    <p>These numbers receive a WhatsApp alert after every transaction.</p>
+    <div class="staff-cards" id="staff-display"></div>
+    <button class="btn btn-sm" style="margin-top:12px" onclick="openStaffModal()">Edit profiles</button>
+  </div>
+  <div class="settings-block">
+    <h3>Notification template</h3>
+    <p>Sent to staff after every transaction. Variables: {customer} {packet} {txn_type} {amount} {principal_after} {interest_due} {weight} {recorded_by} {date}</p>
+    <div class="form-row"><textarea id="notif-tpl" style="height:130px" onchange="saveSettings()"></textarea></div>
+    <button class="btn btn-gold btn-sm" onclick="saveSettings()">Save</button>
+  </div>
+  <div class="settings-block">
+    <h3>Customer WhatsApp template</h3>
+    <p>Used when you tap "WA Customer" on an account. Variables: same as above + {rate}</p>
+    <div class="form-row"><textarea id="cust-tpl" style="height:110px" onchange="saveSettings()"></textarea></div>
+  </div>
+  <div class="settings-block" style="background:var(--bg);border-style:dashed">
+    <h3>Google Sheets connection</h3>
+    <p style="margin-bottom:0">All data syncs live to your Google Sheet: <a href="https://docs.google.com/spreadsheets/d/1KyfAhAGXvHWrdLC34huQ3zNmxZJYUkeTdBUavy6BqXE/edit" target="_blank" style="color:var(--gold)">Open Sheet ↗</a></p>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- NEW ACCOUNT -->
+<div class="overlay" id="modal-new">
+<div class="modal">
+  <div class="modal-head"><h2>New mortgage account</h2><button class="modal-close" onclick="closeModal('modal-new')">×</button></div>
+  <div class="modal-body">
+    <div class="form-2">
+      <div class="form-row"><label>Customer name</label><input id="f-name" placeholder="e.g. Ramesh Kumar"></div>
+      <div class="form-row"><label>Phone</label><input id="f-phone" placeholder="Mobile number"></div>
+    </div>
+    <div class="form-2">
+      <div class="form-row"><label>Packet / locker code</label><input id="f-packet" placeholder="e.g. MJ-042" style="font-family:monospace;letter-spacing:.5px"><div class="hint">Code written on jewellery packet in locker</div></div>
+      <div class="form-row"><label>Handled by</label><select id="f-staff"></select></div>
+    </div>
+    <div class="form-3">
+      <div class="form-row"><label>Principal (₹)</label><input id="f-principal" type="number" placeholder="200000"></div>
+      <div class="form-row"><label>Rate (%/month)</label><input id="f-rate" type="number" step="0.1" placeholder="1.5"></div>
+      <div class="form-row"><label>Gross weight (g)</label><input id="f-weight" type="number" step="0.1" placeholder="55.5"></div>
+    </div>
+    <div class="form-row"><label>Start date</label><input id="f-startdate" type="date"></div>
+    <div class="form-row"><label>Jewellery items</label><textarea id="f-jewelry" placeholder="e.g. Gold chain 30g, 2 bangles 20g, Ring 5g"></textarea></div>
+    <div class="form-row"><label>Jewellery photos</label><div id="new-photos" class="photo-grid"></div><div class="hint">Upload photos for record</div></div>
+    <div class="form-row"><label>Notes</label><textarea id="f-notes" placeholder="Optional..."></textarea></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('modal-new')">Cancel</button>
+    <button class="btn btn-gold" onclick="saveNewAccount()">Create &amp; save</button>
+  </div>
+</div></div>
+
+<!-- PAYMENT -->
+<div class="overlay" id="modal-pay">
+<div class="modal">
+  <div class="modal-head"><h2 id="pay-title">Record transaction</h2><button class="modal-close" onclick="closeModal('modal-pay')">×</button></div>
+  <div class="modal-body">
+    <div id="pay-info" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;font-size:13px"></div>
+    <div class="form-row"><label>Transaction type</label>
+      <select id="f-txn-type" onchange="onTxnChange()">
+        <option value="interest">Interest payment</option>
+        <option value="deposit">Principal deposit (reduces balance)</option>
+        <option value="close">Full closure</option>
+      </select>
+    </div>
+    <div class="form-2">
+      <div class="form-row"><label>Date</label><input id="f-txn-date" type="date"></div>
+      <div class="form-row"><label>Amount paid (₹)</label><input id="f-txn-amt" type="number" placeholder="0"></div>
+    </div>
+    <div id="deposit-note" style="display:none;margin-bottom:14px"><div style="background:#EAF3DE;border-radius:8px;padding:9px 12px;font-size:12px;color:#3B6D11">Amount first clears pending interest, then reduces principal.</div></div>
+    <div class="form-row"><label>Recorded by</label><select id="f-txn-staff"></select></div>
+    <div class="form-row"><label>Notes</label><textarea id="f-txn-notes" placeholder="e.g. Paid by cash..."></textarea></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('modal-pay')">Cancel</button>
+    <button class="btn btn-gold" onclick="saveTransaction()">Save &amp; notify</button>
+  </div>
+</div></div>
+
+<!-- JEWELLERY UPDATE -->
+<div class="overlay" id="modal-jewelry">
+<div class="modal">
+  <div class="modal-head"><h2 id="jewelry-title">Update jewellery</h2><button class="modal-close" onclick="closeModal('modal-jewelry')">×</button></div>
+  <div class="modal-body">
+    <div id="jewelry-info" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;font-size:13px"></div>
+    <div class="form-row"><label>Change type</label>
+      <select id="f-jc-type">
+        <option value="add">Add jewellery (customer brings more)</option>
+        <option value="remove">Remove jewellery (partial return)</option>
+      </select>
+    </div>
+    <div class="form-3">
+      <div class="form-row"><label>Date</label><input id="f-jc-date" type="date"></div>
+      <div class="form-row"><label>Weight change (g)</label><input id="f-jc-weight" type="number" step="0.1" placeholder="10.5"></div>
+      <div class="form-row"><label>New packet code</label><input id="f-jc-packet" placeholder="if changed" style="font-family:monospace"></div>
+    </div>
+    <div class="form-2">
+      <div class="form-row"><label>Items description</label><textarea id="f-jc-items" placeholder="e.g. Added: 1 bangle 12g"></textarea></div>
+      <div class="form-row"><label>Recorded by</label><select id="f-jc-staff"></select></div>
+    </div>
+    <div class="form-row"><label>Photos</label><div id="jc-photos" class="photo-grid"></div></div>
+    <div class="form-row"><label>Notes</label><input id="f-jc-notes" placeholder="Optional..."></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('modal-jewelry')">Cancel</button>
+    <button class="btn btn-gold" onclick="saveJewelryChange()">Save &amp; notify</button>
+  </div>
+</div></div>
+
+<!-- STAFF EDIT -->
+<div class="overlay" id="modal-staff">
+<div class="modal">
+  <div class="modal-head"><h2>Edit staff profiles</h2><button class="modal-close" onclick="closeModal('modal-staff')">×</button></div>
+  <div class="modal-body"><div id="staff-edit"></div></div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('modal-staff')">Cancel</button>
+    <button class="btn btn-gold" onclick="saveStaff()">Save</button>
+  </div>
+</div></div>
+
+<!-- CUSTOMER WA -->
+<div class="overlay" id="modal-cust-wa">
+<div class="modal" style="width:460px">
+  <div class="modal-head"><h2 id="cwa-title">WhatsApp — Customer</h2><button class="modal-close" onclick="closeModal('modal-cust-wa')">×</button></div>
+  <div class="modal-body">
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:28px;height:28px;background:#25D366;border-radius:7px;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></div>
+        <span style="font-size:13px;font-weight:600;color:#166534">Message preview</span>
+      </div>
+      <div id="cwa-preview" style="background:#fff;border-radius:8px;padding:11px;font-size:13px;line-height:1.7;color:#1a1a1a;white-space:pre-wrap;border:1px solid #d1fae5;margin-bottom:10px;max-height:200px;overflow-y:auto"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="copyCwaMsg()">Copy</button>
+        <button class="btn-green btn btn-sm" onclick="openCwaWa()">Open WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- NOTIFY -->
+<div class="overlay" id="modal-notify">
+<div class="modal notify-modal">
+  <div class="modal-head"><h2>Notify your team</h2><button class="modal-close" onclick="closeModal('modal-notify')">×</button></div>
+  <div class="modal-body">
+    <div class="ntfy-summary">
+      <div class="ntfy-tag" id="ntfy-tag"></div>
+      <div class="ntfy-main" id="ntfy-main"></div>
+      <div class="ntfy-sub" id="ntfy-sub"></div>
+    </div>
+    <div class="notify-grid" id="notify-grid"></div>
+    <div class="skip-row"><button onclick="closeModal('modal-notify')">Skip — don't notify</button></div>
+  </div>
+</div></div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">×</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVh3YcHsGN5ssbFzTLiGQgVpbb7Zad7eIFqXkKA642REXjzm1aAoh-b2zPPG0CYmbYiQ/exec';
+const SHOP = 'MJ Girvi';
+
+// ─── LOCAL STATE ──────────────────────────────────────
+let accounts = [];
+let settings = {
+  staff: [{id:'s1',name:'Hardik',role:'Partner',phone:''},{id:'s2',name:'Papa ji',role:'Partner',phone:''}],
+  notifTpl: `*MJ Girvi — Transaction Alert*\n\nCustomer: {customer}\nPacket: {packet}\nType: {txn_type}\nAmount: ₹{amount}\nPrincipal after: ₹{principal_after}\nInterest due: ₹{interest_due}\nWeight: {weight}g\nDate: {date}\nBy: {recorded_by}`,
+  custTpl: `{customer} ji,\n\nAapka gold mortgage update:\n• Packet: {packet}\n• Principal: ₹{principal_after}\n• Interest due: ₹{interest_due}\n• Weight: {weight}g\n• Rate: {rate}%/month\n\nDhanyavaad.\n— {recorded_by}, MJ Girvi`
+};
+let curAccId = null, newPhotos = [], jcPhotos = [], cwaMsg = '', cwaPhone = '';
+
+// ─── APPS SCRIPT API ──────────────────────────────────
+function setSyncStatus(s){
+  const dot=document.getElementById('sync-dot'),lbl=document.getElementById('sync-label');
+  dot.className='sync-dot '+s;
+  lbl.textContent=s==='syncing'?'Saving...':(s==='synced'?'Synced':'Sync error');
+}
+
+async function scriptGetAll(){
+  const r=await fetch(SCRIPT_URL+'?action=readAll');
+  if(!r.ok) throw new Error('Read failed: '+r.status);
+  return await r.json();
+}
+
+async function scriptWriteAll(data){
+  const r=await fetch(SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'writeAll',sheets:data})
+  });
+  if(!r.ok) throw new Error('Write failed: '+r.status);
+  const j=await r.json();
+  if(!j.success) throw new Error(j.error||'Write failed');
+}
+
+// ─── CACHE ────────────────────────────────────────────
+const CACHE_KEY = 'mjgirvi_cache_v1';
+
+function saveToCache(){
+  try{localStorage.setItem(CACHE_KEY,JSON.stringify({accounts,settings,ts:Date.now()}));}catch(e){}
+}
+function loadFromCache(){
+  try{
+    const raw=localStorage.getItem(CACHE_KEY);
+    if(!raw) return false;
+    const d=JSON.parse(raw);
+    if(d.accounts) accounts=d.accounts;
+    if(d.settings) settings=Object.assign(settings,d.settings);
+    return true;
+  }catch(e){return false;}
+}
+
+// ─── LOAD / SAVE ──────────────────────────────────────
+async function loadAll(){
+  // Step 1: load from cache instantly — renders UI immediately
+  const hasCached = loadFromCache();
+  if(hasCached){
+    hideLoader();
+    renderDashboard();
+    renderSettings();
+    setSyncStatus('syncing');
+  } else {
+    showLoader('Loading MJ Girvi...');
+  }
+
+  // Step 2: fetch everything in ONE call
+  try{
+    const all = await scriptGetAll();
+    // Settings
+    try{
+      const sv=all['Settings']||[];
+      if(sv.length&&sv[0]&&sv[0][0]) settings=Object.assign(settings,JSON.parse(sv[0][0]));
+    }catch(e){}
+    // Accounts
+    try{
+      const av=all['Accounts']||[];
+      if(av.length){
+        accounts=av.map(r=>{try{return JSON.parse(r[0]);}catch(e){return null;}}).filter(Boolean);
+        // Photos
+        try{
+          const pv=all['Photos']||[];
+          pv.forEach(r=>{
+            const[aid,idx,b64]=r;
+            const acc=accounts.find(a=>a.id===aid);
+            if(acc){if(!acc.photos)acc.photos=[];acc.photos[parseInt(idx)]=b64;}
+          });
+        }catch(e){}
+      }
+    }catch(e){}
+    saveToCache();
+    setSyncStatus('synced');
+    // Re-render with fresh data
+    renderDashboard();
+    renderSettings();
+    if(document.getElementById('acct-detail-view').style.display!=='none'){
+      const a=accounts.find(x=>x.id===curAccId);
+      if(a) renderDetail(a,document.getElementById('acct-detail-view'));
+    }
+  }catch(e){
+    setSyncStatus('error');
+    if(!hasCached) toast('Could not load. Check internet.',true);
+    else toast('Showing cached data — sync failed.',true);
+  }
+  hideLoader();
+}
+
+async function saveAccounts(){
+  setSyncStatus('syncing');
+  saveToCache();
+  try{
+    const accountRows=accounts.map(a=>{const clone={...a,photos:[]};return[JSON.stringify(clone)];});
+    const photoRows=[];
+    accounts.forEach(a=>{(a.photos||[]).forEach((b64,i)=>{if(b64)photoRows.push([a.id,String(i),b64]);});});
+    await scriptWriteAll({
+      Accounts: accountRows.length?accountRows:[['']],
+      Photos: photoRows.length?photoRows:[['','','']],
+    });
+    setSyncStatus('synced');
+  }catch(e){
+    setSyncStatus('error');
+    toast('Saved locally. Will sync when connection improves.',true);
+  }
+}
+
+async function saveSettingsToSheet(){
+  setSyncStatus('syncing');
+  saveToCache();
+  try{
+    await scriptWriteAll({Settings:[[JSON.stringify(settings)]]});
+    setSyncStatus('synced');
+  }catch(e){setSyncStatus('error');}
+}
+
+// ─── HELPERS ──────────────────────────────────────────
+function fmt(n){return n===undefined||n===null?'—':Math.round(n).toLocaleString('en-IN');}
+function fmtRs(n){return'₹'+fmt(n);}
+function fmtG(n){return(!n&&n!==0)?'—':(+n).toFixed(1)+'g';}
+function fmtDate(s){if(!s)return'—';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+function daysBetween(d1,d2){const a=new Date(d1+'T00:00:00'),b=new Date(d2+'T00:00:00');return Math.max(0,Math.round((b-a)/86400000));}
+function today(){return new Date().toISOString().split('T')[0];}
+function sName(id){const s=settings.staff.find(x=>x.id===id);return s?s.name:'—';}
+function curWeight(acc){let w=parseFloat(acc.weight)||0;(acc.jewelryChanges||[]).forEach(c=>{if(c.type==='add')w+=parseFloat(c.weightChange)||0;else w=Math.max(0,w-(parseFloat(c.weightChange)||0));});return w;}
+function curPacket(acc){const ch=(acc.jewelryChanges||[]).filter(c=>c.newPacketCode).sort((a,b)=>b.date.localeCompare(a.date));return ch.length?ch[0].newPacketCode:(acc.packetCode||'');}
+
+function calcInterest(acc){
+  const txns=(acc.transactions||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  let p=acc.principal,ld=acc.startDate,ai=0,pi=0;
+  for(const tx of txns){
+    ai+=p*(acc.rate/100)*(daysBetween(ld,tx.date)/30);
+    if(tx.type==='interest'){pi+=tx.amount;}
+    else if(tx.type==='deposit'||tx.type==='close'){
+      const u=ai-pi;let r=tx.amount;
+      if(r>=u){r-=u;pi+=u;const pp=Math.min(r,p);p=Math.max(0,p-pp);}else pi+=r;
+      if(tx.type==='close')p=0;
+    }
+    ld=tx.date;
+  }
+  ai+=p*(acc.rate/100)*(daysBetween(ld,today())/30);
+  return{currentPrincipal:p,interestDue:Math.max(0,ai-pi),totalAccrued:ai,totalPaid:pi};
+}
+
+function showLoader(txt){document.getElementById('loader-text').textContent=txt||'Saving...';document.getElementById('loader').classList.add('show');}
+function hideLoader(){document.getElementById('loader').classList.remove('show');}
+let toastTimer;
+function toast(msg,err){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast'+(err?' error':'');
+  clearTimeout(toastTimer);
+  setTimeout(()=>el.classList.add('show'),10);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ─── PAGES ────────────────────────────────────────────
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav button')[{dashboard:0,accounts:1,settings:2}[p]].classList.add('active');
+  if(p==='dashboard')renderDashboard();
+  if(p==='accounts'){renderList();document.getElementById('acct-list-view').style.display='block';document.getElementById('acct-detail-view').style.display='none';}
+  if(p==='settings')renderSettings();
+}
+
+function renderDashboard(){
+  const active=accounts.filter(a=>a.status==='active');
+  let tp=0,ti=0,ov=0;
+  active.forEach(a=>{const c=calcInterest(a);tp+=c.currentPrincipal;ti+=c.interestDue;if(c.interestDue>0)ov++;});
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat"><div class="stat-label">Active accounts</div><div class="stat-val">${active.length}</div></div>
+    <div class="stat"><div class="stat-label">Principal deployed</div><div class="stat-val" style="font-size:18px">${fmtRs(tp)}</div></div>
+    <div class="stat"><div class="stat-label">Interest receivable</div><div class="stat-val gold" style="font-size:18px">${fmtRs(ti)}</div></div>
+    <div class="stat"><div class="stat-label">Pending interest</div><div class="stat-val">${ov}</div></div>`;
+  const tb=document.getElementById('dash-tbody');
+  if(!active.length){tb.innerHTML=`<tr><td colspan="8" class="empty-state">No active accounts. Create one to get started.</td></tr>`;return;}
+  tb.innerHTML=active.sort((a,b)=>calcInterest(b).interestDue-calcInterest(a).interestDue).map(a=>{
+    const c=calcInterest(a);const w=curWeight(a);const pc=curPacket(a);
+    return`<tr onclick="openDetail('${a.id}')">
+      <td><div style="font-weight:600">${a.name}</div><div style="font-size:11px;color:var(--text3)">${a.phone||''}</div></td>
+      <td>${pc?`<span class="packet">${pc}</span>`:'—'}</td>
+      <td>${fmtRs(c.currentPrincipal)}</td><td>${w?fmtG(w):'—'}</td>
+      <td>${fmtDate(a.startDate)}</td>
+      <td class="amt-due">${fmtRs(c.interestDue)}</td>
+      <td>${sName(a.staffId)}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-gold" onclick="event.stopPropagation();openPayModal('${a.id}')">Payment</button>
+        <button class="btn btn-sm btn-green" onclick="event.stopPropagation();openCustWa('${a.id}')">WA</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderList(){
+  const q=(document.getElementById('search-input')||{value:''}).value.toLowerCase();
+  const list=accounts.filter(a=>{
+    if(!q)return true;
+    return a.name.toLowerCase().includes(q)||(a.phone||'').includes(q)||curPacket(a).toLowerCase().includes(q);
+  });
+  const tb=document.getElementById('acct-tbody');
+  if(!list.length){tb.innerHTML=`<tr><td colspan="8" class="empty-state">No accounts found.</td></tr>`;return;}
+  tb.innerHTML=list.map(a=>{const w=curWeight(a);const pc=curPacket(a);return`<tr onclick="openDetail('${a.id}')">
+    <td><div style="font-weight:600">${a.name}</div></td>
+    <td>${pc?`<span class="packet">${pc}</span>`:'—'}</td>
+    <td>${a.phone||'—'}</td><td>${fmtRs(a.principal)}</td>
+    <td>${w?fmtG(w):'—'}</td>
+    <td>${fmtDate(a.startDate)}</td>
+    <td><span class="badge ${a.status==='active'?'badge-active':'badge-closed'}">${a.status==='active'?'Active':'Closed'}</span></td>
+    <td><button class="btn btn-sm" onclick="event.stopPropagation();openDetail('${a.id}')">View</button></td>
+  </tr>`;}).join('');
+}
+
+function openDetail(id){
+  curAccId=id;
+  document.getElementById('acct-list-view').style.display='none';
+  const dv=document.getElementById('acct-detail-view');dv.style.display='block';
+  showPage('accounts');
+  document.getElementById('acct-list-view').style.display='none';
+  dv.style.display='block';
+  renderDetail(accounts.find(x=>x.id===id),dv);
+}
+
+function renderDetail(a,container){
+  if(!a)return;
+  const c=calcInterest(a);const w=curWeight(a);const pc=curPacket(a);
+  const photos=a.photos||[];
+  const jItems=(a.jewelry||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const txns=(a.transactions||[]).map(t=>({...t,_k:'txn'}));
+  const jcs=(a.jewelryChanges||[]).map(j=>({...j,_k:'jc'}));
+  const evts=[...txns,...jcs].sort((a,b)=>a.date.localeCompare(b.date));
+  let rP=a.principal,lD=a.startDate,aI=0,pI=0,rW=parseFloat(a.weight)||0;
+  const tl=[{date:a.startDate,desc:`Account opened — ${fmtRs(a.principal)} at ${a.rate}%/mo · ${fmtG(rW)}${pc?' · Packet: '+pc:''} · By ${sName(a.staffId)}`,dc:'d-start',amt:'',ac:'var(--text3)'}];
+  for(const ev of evts){
+    if(ev._k==='txn'){
+      aI+=rP*(a.rate/100)*(daysBetween(lD,ev.date)/30);
+      const u=aI-pI;let desc='',ac='var(--green)',dc='d-interest';
+      if(ev.type==='interest'){pI+=ev.amount;desc=`Interest payment · by ${sName(ev.staffId)}${ev.notes?' · '+ev.notes:''}`;}
+      else if(ev.type==='deposit'){dc='d-deposit';ac='var(--blue)';let r=ev.amount;
+        if(r>=u){r-=u;pI+=u;const pp=Math.min(r,rP);rP=Math.max(0,rP-pp);desc=`Deposit — cleared ${fmtRs(Math.round(u))} interest + ${fmtRs(pp)} principal → new principal ${fmtRs(rP)}${ev.notes?' · '+ev.notes:''}`;}
+        else{pI+=r;desc=`Deposit — applied to interest${ev.notes?' · '+ev.notes:''}`;}
+      }else if(ev.type==='close'){dc='d-close';ac='#aaa';let r=ev.amount;
+        if(r>=u){r-=u;pI+=u;rP=Math.max(0,rP-r);}else pI+=r;rP=0;desc=`Account closed${ev.notes?' · '+ev.notes:''}`;
+      }
+      tl.push({date:ev.date,desc,dc,amt:fmtRs(ev.amount),ac});lD=ev.date;
+    }else if(ev._k==='jc'){
+      const wc=parseFloat(ev.weightChange)||0,pW=rW;
+      if(ev.type==='add')rW+=wc;else rW=Math.max(0,rW-wc);
+      const sign=ev.type==='add'?'+':'-';
+      const pcn=ev.newPacketCode?` · New packet: ${ev.newPacketCode}`:'';
+      tl.push({date:ev.date,desc:`Jewellery ${ev.type==='add'?'added':'removed'} — ${sign}${fmtG(wc)} (${fmtG(pW)} → ${fmtG(rW)})${pcn}${ev.items?' · '+ev.items:''}${ev.notes?' · '+ev.notes:''} · by ${sName(ev.staffId)}`,dc:ev.type==='add'?'d-jadd':'d-jrem',amt:`${sign}${fmtG(wc)}`,ac:ev.type==='add'?'var(--purple)':'var(--red)'});
+    }
+  }
+  container.innerHTML=`
+    <button class="back-btn" onclick="backToList()">← Back to accounts</button>
+    <div class="detail-top">
+      <div class="detail-name">
+        <h2>${a.name} ${pc?`<span class="packet" style="font-size:14px">${pc}</span>`:''} <span class="badge ${a.status==='active'?'badge-active':'badge-closed'}">${a.status==='active'?'Active':'Closed'}</span></h2>
+        <p>${a.phone||''} · By ${sName(a.staffId)} · Since ${fmtDate(a.startDate)}</p>
+        ${jItems.length?`<div style="margin-top:7px">${jItems.map(j=>`<span class="jtag">${j}</span>`).join('')}</div>`:''}
+        ${w?`<div class="wpill">⚖ ${fmtG(w)}</div>`:''}
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start">
+        ${a.status==='active'?`
+        <button class="btn btn-sm btn-gold" onclick="openPayModal('${a.id}')">Record payment</button>
+        <button class="btn btn-sm" style="border-color:var(--purple);color:var(--purple)" onclick="openJewelryModal('${a.id}')">Update jewellery</button>
+        <button class="btn btn-sm btn-green" onclick="openCustWa('${a.id}')">WA customer</button>`:''}
+        <button class="btn btn-sm btn-danger" onclick="deleteAccount('${a.id}')">Delete</button>
+      </div>
+    </div>
+    <div class="info-grid">
+      <div class="info-cell"><label>Current principal</label><div class="val gold">${fmtRs(c.currentPrincipal)}</div></div>
+      <div class="info-cell"><label>Interest due</label><div class="val gold">${fmtRs(c.interestDue)}</div></div>
+      <div class="info-cell"><label>Daily interest</label><div class="val">${fmtRs(c.currentPrincipal*(a.rate/100)/30)}/day</div></div>
+      <div class="info-cell"><label>Packet / locker code</label><div class="val">${pc||'—'}</div></div>
+      <div class="info-cell"><label>Current weight</label><div class="val">${w?fmtG(w):'—'}</div></div>
+      <div class="info-cell"><label>Rate</label><div class="val">${a.rate}% / month</div></div>
+    </div>
+    ${photos.length||a.status==='active'?`
+    <div class="sec-label">Jewellery photos</div>
+    <div class="photo-grid" style="margin-bottom:16px">
+      ${photos.map(p=>`<img class="photo-thumb" src="${p}" onclick="openLightbox('${p}')">`).join('')}
+      ${a.status==='active'?`<label class="photo-add" for="det-photo-inp">+<span>Add</span></label>
+      <input type="file" id="det-photo-inp" accept="image/*" multiple style="display:none" onchange="addDetailPhoto(event,'${a.id}')">`:``}
+    </div>`:''}
+    <div class="sec-label">Full history
+      <span style="font-weight:400;font-size:11px;display:flex;gap:10px">
+        <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:4px"></span>Interest</span>
+        <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--blue);margin-right:4px"></span>Deposit</span>
+        <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--purple);margin-right:4px"></span>Jewellery in</span>
+        <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:4px"></span>Jewellery out</span>
+      </span>
+    </div>
+    <div class="tl-card">
+      ${[...tl].reverse().map(t=>`<div class="tl-row">
+        <div class="tl-dot ${t.dc}"></div>
+        <div class="tl-date">${fmtDate(t.date)}</div>
+        <div class="tl-desc">${t.desc}</div>
+        <div class="tl-amt" style="color:${t.ac}">${t.amt}</div>
+      </div>`).join('')}
+    </div>
+    ${a.notes?`<div style="font-size:12px;color:var(--text2);margin-top:14px;padding:11px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)">${a.notes}</div>`:''}
+  `;
+}
+
+function backToList(){
+  document.getElementById('acct-list-view').style.display='block';
+  document.getElementById('acct-detail-view').style.display='none';
+  renderList();
+}
+
+// ─── STAFF OPTIONS ─────────────────────────────────────
+function staffOpts(sel){return settings.staff.map(s=>`<option value="${s.id}" ${s.id===sel?'selected':''}>${s.name}</option>`).join('');}
+
+// ─── NEW ACCOUNT ───────────────────────────────────────
+function openNewAccount(){
+  newPhotos=[];
+  document.getElementById('f-startdate').value=today();
+  document.getElementById('f-staff').innerHTML=staffOpts(settings.staff[0]?.id);
+  ['f-name','f-phone','f-packet','f-principal','f-rate','f-weight','f-jewelry','f-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderNewPhotoGrid();openModal('modal-new');
+}
+function renderNewPhotoGrid(){
+  const el=document.getElementById('new-photos');if(!el)return;
+  el.innerHTML=newPhotos.map(p=>`<img class="photo-thumb" src="${p}" onclick="openLightbox('${p}')">`).join('')+
+    `<label class="photo-add" for="new-photo-inp">+<span>Add</span></label>
+     <input type="file" id="new-photo-inp" accept="image/*" multiple style="display:none" onchange="handleNewPhoto(event)">`;
+}
+function handleNewPhoto(e){Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{newPhotos.push(ev.target.result);renderNewPhotoGrid();};r.readAsDataURL(f);});}
+function addDetailPhoto(e,accId){
+  const a=accounts.find(x=>x.id===accId);if(!a)return;if(!a.photos)a.photos=[];
+  Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=async ev=>{
+    a.photos.push(ev.target.result);
+    await saveAccounts();
+    renderDetail(a,document.getElementById('acct-detail-view'));
+    toast('Photo saved.');
+  };r.readAsDataURL(f);});
+}
+
+async function saveNewAccount(){
+  const name=document.getElementById('f-name').value.trim();
+  const phone=document.getElementById('f-phone').value.trim();
+  const packetCode=document.getElementById('f-packet').value.trim().toUpperCase();
+  const principal=parseFloat(document.getElementById('f-principal').value);
+  const rate=parseFloat(document.getElementById('f-rate').value);
+  const weight=document.getElementById('f-weight').value;
+  const startDate=document.getElementById('f-startdate').value;
+  const jewelry=document.getElementById('f-jewelry').value.trim();
+  const notes=document.getElementById('f-notes').value.trim();
+  const staffId=document.getElementById('f-staff').value;
+  if(!name||!principal||!rate||!startDate){toast('Fill in all required fields.',true);return;}
+  if(packetCode&&accounts.find(a=>a.status==='active'&&curPacket(a)===packetCode)){
+    if(!confirm(`Packet "${packetCode}" is already on an active account. Continue?`))return;
+  }
+  const acc={id:'a'+Date.now(),name,phone,packetCode,principal,rate,weight:weight?parseFloat(weight):null,startDate,jewelry,notes,staffId,status:'active',transactions:[],jewelryChanges:[],photos:[...newPhotos]};
+  accounts.push(acc);
+  closeModal('modal-new');newPhotos=[];
+  showLoader('Saving to Google Sheets...');
+  await saveAccounts();
+  hideLoader();
+  toast('Account created and saved.');
+  renderDashboard();renderList();
+  showNotify(acc,'new_account',principal,staffId);
+}
+
+// ─── PAYMENT ───────────────────────────────────────────
+function openPayModal(id){
+  curAccId=id;const a=accounts.find(x=>x.id===id);const c=calcInterest(a);const pc=curPacket(a);
+  document.getElementById('pay-title').textContent='Record payment — '+a.name;
+  document.getElementById('pay-info').innerHTML=`<span style="color:var(--text2)">Principal:</span> <strong>${fmtRs(c.currentPrincipal)}</strong> &nbsp;·&nbsp; <span style="color:var(--text2)">Interest due:</span> <strong style="color:var(--gold)">${fmtRs(c.interestDue)}</strong>${pc?` &nbsp;·&nbsp; <span class="packet" style="font-size:12px">${pc}</span>`:''}`;
+  document.getElementById('f-txn-date').value=today();
+  document.getElementById('f-txn-amt').value='';
+  document.getElementById('f-txn-notes').value='';
+  document.getElementById('f-txn-type').value='interest';
+  document.getElementById('f-txn-staff').innerHTML=staffOpts(a.staffId);
+  document.getElementById('deposit-note').style.display='none';
+  openModal('modal-pay');
+}
+function onTxnChange(){document.getElementById('deposit-note').style.display=(['deposit','close'].includes(document.getElementById('f-txn-type').value))?'block':'none';}
+
+async function saveTransaction(){
+  const type=document.getElementById('f-txn-type').value;
+  const date=document.getElementById('f-txn-date').value;
+  const amount=parseFloat(document.getElementById('f-txn-amt').value);
+  const notes=document.getElementById('f-txn-notes').value.trim();
+  const staffId=document.getElementById('f-txn-staff').value;
+  if(!date||!amount){toast('Enter date and amount.',true);return;}
+  const a=accounts.find(x=>x.id===curAccId);
+  if(!a.transactions)a.transactions=[];
+  a.transactions.push({id:'t'+Date.now(),type,date,amount,notes,staffId});
+  if(type==='close')a.status='closed';
+  closeModal('modal-pay');
+  showLoader('Saving transaction...');
+  await saveAccounts();
+  hideLoader();
+  toast('Transaction saved.');
+  renderDashboard();renderList();
+  if(document.getElementById('acct-detail-view').style.display!=='none')renderDetail(a,document.getElementById('acct-detail-view'));
+  showNotify(a,type,amount,staffId);
+}
+
+// ─── JEWELLERY ─────────────────────────────────────────
+function openJewelryModal(id){
+  curAccId=id;jcPhotos=[];const a=accounts.find(x=>x.id===id);
+  document.getElementById('jewelry-title').textContent='Update jewellery — '+a.name;
+  document.getElementById('jewelry-info').innerHTML=`<span style="color:var(--text2)">Current weight:</span> <strong>${fmtG(curWeight(a))}</strong> &nbsp;·&nbsp; <span style="color:var(--text2)">Packet:</span> <strong>${curPacket(a)||'—'}</strong>`;
+  document.getElementById('f-jc-date').value=today();
+  document.getElementById('f-jc-weight').value='';
+  document.getElementById('f-jc-packet').value='';
+  document.getElementById('f-jc-items').value='';
+  document.getElementById('f-jc-notes').value='';
+  document.getElementById('f-jc-type').value='add';
+  document.getElementById('f-jc-staff').innerHTML=staffOpts(a.staffId);
+  renderJcPhotoGrid();openModal('modal-jewelry');
+}
+function renderJcPhotoGrid(){
+  const el=document.getElementById('jc-photos');if(!el)return;
+  el.innerHTML=jcPhotos.map(p=>`<img class="photo-thumb" src="${p}" onclick="openLightbox('${p}')">`).join('')+
+    `<label class="photo-add" for="jc-photo-inp">+<span>Add</span></label>
+     <input type="file" id="jc-photo-inp" accept="image/*" multiple style="display:none" onchange="handleJcPhoto(event)">`;
+}
+function handleJcPhoto(e){Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{jcPhotos.push(ev.target.result);renderJcPhotoGrid();};r.readAsDataURL(f);});}
+
+async function saveJewelryChange(){
+  const type=document.getElementById('f-jc-type').value;
+  const date=document.getElementById('f-jc-date').value;
+  const wChange=parseFloat(document.getElementById('f-jc-weight').value);
+  const newPc=document.getElementById('f-jc-packet').value.trim().toUpperCase();
+  const items=document.getElementById('f-jc-items').value.trim();
+  const notes=document.getElementById('f-jc-notes').value.trim();
+  const staffId=document.getElementById('f-jc-staff').value;
+  if(!date||!wChange){toast('Enter date and weight.',true);return;}
+  const a=accounts.find(x=>x.id===curAccId);
+  if(!a.jewelryChanges)a.jewelryChanges=[];
+  a.jewelryChanges.push({id:'jc'+Date.now(),type,date,weightChange:wChange,newPacketCode:newPc||null,items,notes,staffId,photos:[...jcPhotos]});
+  if(jcPhotos.length){if(!a.photos)a.photos=[];a.photos.push(...jcPhotos);}
+  closeModal('modal-jewelry');jcPhotos=[];
+  showLoader('Saving jewellery update...');
+  await saveAccounts();
+  hideLoader();
+  toast('Jewellery update saved.');
+  renderDashboard();renderList();
+  if(document.getElementById('acct-detail-view').style.display!=='none')renderDetail(a,document.getElementById('acct-detail-view'));
+  showNotify(a,type==='add'?'jewelry_add':'jewelry_remove',wChange,staffId);
+}
+
+// ─── NOTIFICATIONS ─────────────────────────────────────
+function buildMsg(acc,txnType,amount,staffId){
+  const c=calcInterest(acc);const w=curWeight(acc);const pc=curPacket(acc);
+  const labels={interest:'Interest payment',deposit:'Principal deposit',close:'Full closure',jewelry_add:'Jewellery added',jewelry_remove:'Jewellery removed',new_account:'New account opened'};
+  return (settings.notifTpl||'')
+    .replace('{customer}',acc.name).replace('{packet}',pc||'—')
+    .replace('{txn_type}',labels[txnType]||txnType)
+    .replace('{amount}',fmt(amount)).replace('{principal_after}',fmt(c.currentPrincipal))
+    .replace('{interest_due}',fmt(c.interestDue)).replace('{weight}',w?(+w).toFixed(1):'—')
+    .replace('{date}',fmtDate(today())).replace('{recorded_by}',sName(staffId))
+    .replace('{rate}',acc.rate).replace('{shop_name}',SHOP);
+}
+
+function showNotify(acc,txnType,amount,staffId){
+  const msg=buildMsg(acc,txnType,amount,staffId);
+  const labels={interest:'Interest payment',deposit:'Principal deposit',close:'Full closure',jewelry_add:'Jewellery added',jewelry_remove:'Jewellery removed',new_account:'New account opened'};
+  const c=calcInterest(acc);const pc=curPacket(acc);
+  document.getElementById('ntfy-tag').textContent=labels[txnType]||txnType;
+  document.getElementById('ntfy-main').textContent=acc.name+(pc?' · '+pc:'');
+  document.getElementById('ntfy-sub').textContent=amount?fmtRs(amount)+' · Principal: '+fmtRs(c.currentPrincipal)+' · Interest due: '+fmtRs(c.interestDue):'Principal: '+fmtRs(c.currentPrincipal);
+  const grid=document.getElementById('notify-grid');
+  const staffWithPhone=settings.staff.filter(s=>s.phone);
+  if(!staffWithPhone.length){
+    grid.innerHTML=`<div style="grid-column:1/-1;padding:20px;text-align:center;font-size:13px;color:var(--text3)">No phone numbers set yet.<br><button class="btn btn-sm" style="margin-top:10px" onclick="closeModal('modal-notify');showPage('settings')">Add in Settings →</button></div>`;
+  }else{
+    grid.innerHTML=staffWithPhone.map(s=>{
+      const url='https://wa.me/91'+s.phone+'?text='+encodeURIComponent(msg);
+      return`<div class="ntfy-card">
+        <div class="ntfy-person"><div class="ntfy-avatar">${s.name.charAt(0).toUpperCase()}</div><div><div class="ntfy-name">${s.name}</div><div class="ntfy-phone">+91 ${s.phone}</div></div></div>
+        <div class="ntfy-preview">${msg}</div>
+        <button class="wa-btn" id="wab-${s.id}" onclick="sendNotif('${s.id}','${url}')">
+          <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:#fff;flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Send to ${s.name}
+        </button>
+      </div>`;
+    }).join('');
+  }
+  openModal('modal-notify');
+}
+
+function sendNotif(sid,url){
+  window.open(url,'_blank');
+  const btn=document.getElementById('wab-'+sid);
+  if(btn){btn.innerHTML='✓ Opened';btn.classList.add('sent');btn.disabled=true;}
+}
+
+// ─── CUSTOMER WA ───────────────────────────────────────
+function openCustWa(id){
+  const a=accounts.find(x=>x.id===id);const c=calcInterest(a);const w=curWeight(a);const pc=curPacket(a);
+  cwaMsg=(settings.custTpl||'')
+    .replace('{customer}',a.name).replace('{packet}',pc||'—')
+    .replace('{principal_after}',fmt(c.currentPrincipal)).replace('{interest_due}',fmt(c.interestDue))
+    .replace('{rate}',a.rate).replace('{weight}',w?(+w).toFixed(1):'—')
+    .replace('{date}',fmtDate(today())).replace('{recorded_by}',sName(a.staffId))
+    .replace('{shop_name}',SHOP).replace('{amount}','').replace('{txn_type}','').replace('{principal_after}',fmt(c.currentPrincipal));
+  cwaPhone=a.phone||'';
+  document.getElementById('cwa-title').textContent='WhatsApp — '+a.name;
+  document.getElementById('cwa-preview').textContent=cwaMsg;
+  openModal('modal-cust-wa');
+}
+function copyCwaMsg(){navigator.clipboard.writeText(cwaMsg).then(()=>toast('Copied!')).catch(()=>toast(cwaMsg));}
+function openCwaWa(){const n=cwaPhone.replace(/\D/g,'');window.open('https://wa.me/'+(n?'91'+n:'')+'?text='+encodeURIComponent(cwaMsg),'_blank');}
+
+// ─── SETTINGS ──────────────────────────────────────────
+function renderSettings(){
+  document.getElementById('staff-display').innerHTML=settings.staff.map(s=>`<div class="staff-card-d">
+    <div class="av">${s.name.charAt(0).toUpperCase()}</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:2px">${s.name}</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:8px">${s.role||'Staff'}</div>
+    <div style="font-size:11px;color:var(--text3)">Notify number</div>
+    <div style="font-size:13px;font-weight:500">${s.phone?'+91 '+s.phone:'<span style="color:var(--text3);font-weight:400">Not set</span>'}</div>
+  </div>`).join('');
+  document.getElementById('notif-tpl').value=settings.notifTpl||'';
+  document.getElementById('cust-tpl').value=settings.custTpl||'';
+}
+
+function openStaffModal(){
+  document.getElementById('staff-edit').innerHTML=`
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Add WhatsApp numbers to receive alerts after every transaction.</p>
+    ${settings.staff.map((s,i)=>`
+    <div style="background:var(--bg);border-radius:var(--radius);padding:13px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:9px;color:var(--text2)">${s.name||'Person '+(i+1)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:center">
+        <input value="${s.name}" id="se-n-${i}" placeholder="Name" style="height:36px;border:1px solid var(--border);border-radius:var(--radius);padding:0 11px;font-size:13px;background:#fff;color:var(--text);font-family:'DM Sans',sans-serif">
+        <input value="${s.role||''}" id="se-r-${i}" placeholder="Role" style="height:36px;border:1px solid var(--border);border-radius:var(--radius);padding:0 11px;font-size:13px;background:#fff;color:var(--text);font-family:'DM Sans',sans-serif">
+        <input value="${s.phone||''}" id="se-p-${i}" placeholder="WhatsApp number" style="height:36px;border:1px solid var(--border);border-radius:var(--radius);padding:0 11px;font-size:13px;background:#fff;color:var(--text);font-family:'DM Sans',sans-serif">
+        <button class="btn btn-sm btn-danger" onclick="removeStaff(${i})">✕</button>
+      </div>
+    </div>`).join('')}
+    <button class="btn btn-sm" onclick="addStaffRow()">+ Add person</button>`;
+  openModal('modal-staff');
+}
+function addStaffRow(){settings.staff.push({id:'s'+Date.now(),name:'',role:'',phone:''});openStaffModal();}
+function removeStaff(i){settings.staff.splice(i,1);openStaffModal();}
+async function saveStaff(){
+  settings.staff.forEach((s,i)=>{
+    const n=document.getElementById('se-n-'+i),r=document.getElementById('se-r-'+i),p=document.getElementById('se-p-'+i);
+    if(n)s.name=n.value.trim();if(r)s.role=r.value.trim();if(p)s.phone=p.value.replace(/\D/g,'');
+  });
+  settings.staff=settings.staff.filter(s=>s.name);
+  closeModal('modal-staff');
+  await saveSettingsToSheet();
+  toast('Staff profiles saved.');
+  renderSettings();
+}
+
+async function saveSettings(){
+  settings.notifTpl=document.getElementById('notif-tpl').value;
+  settings.custTpl=document.getElementById('cust-tpl').value;
+  await saveSettingsToSheet();
+  toast('Settings saved.');
+}
+
+// ─── DELETE ────────────────────────────────────────────
+async function deleteAccount(id){
+  if(!confirm('Delete this account permanently from Google Sheets?'))return;
+  accounts=accounts.filter(x=>x.id!==id);
+  showLoader('Deleting...');
+  await saveAccounts();
+  hideLoader();
+  toast('Account deleted.');
+  backToList();renderDashboard();
+}
+
+// ─── PHOTO LIGHTBOX ────────────────────────────────────
+function openLightbox(src){document.getElementById('lightbox-img').src=src;document.getElementById('lightbox').classList.add('open');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+
+// ─── MODAL UTILS ───────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ─── BOOT ──────────────────────────────────────────────
+(async()=>{
+  await loadAll();
+  renderDashboard();
+  renderSettings();
+})();
+</script>
+</body>
+</html>
